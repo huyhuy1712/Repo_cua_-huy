@@ -4,6 +4,7 @@ import static com.example.bt2.ui.theme.XmlParser.exportCustomersToXML;
 import static com.example.bt2.ui.theme.XmlParser.sendEmailWithXMLFile;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -14,6 +15,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.bt2.R;
@@ -22,6 +25,7 @@ import com.example.bt2.provider.DatabaseManager;
 import com.example.bt2.ui.theme.XmlParser;
 
 
+import java.io.InputStream;
 import java.util.List;
 
 public class input_point_bt2 extends AppCompatActivity {
@@ -35,7 +39,7 @@ public class input_point_bt2 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.input_point_bt2);
 
-        importCustomersToContentProvider();
+//        importCustomersToContentProvider();
 
         EditText phonenumber = findViewById(R.id.numberphope);
         TextView curr_point = findViewById(R.id.curr_point);
@@ -82,9 +86,6 @@ public class input_point_bt2 extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 importCustomersToContentProvider();
-                // Thông báo thành công
-                Toast.makeText(input_point_bt2.this, "Customers imported successfully!", Toast.LENGTH_SHORT).show();
-
             }
         });
 
@@ -280,33 +281,65 @@ public class input_point_bt2 extends AppCompatActivity {
     }
 
     // Hàm nhập danh sách khách hàng từ file XML và lưu vào cơ sở dữ liệu
+    private static final int PICK_XML_FILE_REQUEST_CODE = 100;
+
     private void importCustomersToContentProvider() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("text/xml"); // Chỉ chọn file XML
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
         try {
-            // Bước 1: Parse khách hàng từ file XML
-            List<Customer> newCustomers = XmlParser.parseCustomersFromXml(this, R.raw.customers);
-
-            // Bước 2: Lấy danh sách số điện thoại của các khách hàng hiện tại từ cơ sở dữ liệu
-            List<String> existingPhoneNumbers = dbManager.getAllCustomerPhoneNumbers();
-
-            // Bước 3: Thêm khách hàng mới vào cơ sở dữ liệu nếu không tồn tại
-            for (Customer newCustomer : newCustomers) {
-                if (!existingPhoneNumbers.contains(newCustomer.getPhoneNumber())) {
-                    // Sử dụng hàm insertCustomer để chèn khách hàng mới vào cơ sở dữ liệu
-                    long result = dbManager.insertCustomer(newCustomer);
-
-                    // Kiểm tra kết quả chèn
-                    if (result == -1) {
-                        Log.e("InsertError", "Failed to insert customer: " + newCustomer.getPhoneNumber());
-                    }
-                }
-            }
-
-
+            startActivityForResult(Intent.createChooser(intent, "Select XML File"), PICK_XML_FILE_REQUEST_CODE);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e("ImportError", "Failed to import customers: " + e.getMessage(), e);
-            Toast.makeText(input_point_bt2.this, "Failed to import customers.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No file manager found or unable to open file picker.", Toast.LENGTH_SHORT).show();
         }
     }
+
+
+    // Xử lý kết quả sau khi người dùng chọn file
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_XML_FILE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            Uri fileUri = data.getData(); // Lấy URI của file được chọn
+            if (fileUri != null) {
+                try {
+                    // Mở InputStream từ URI
+                    InputStream inputStream = getContentResolver().openInputStream(fileUri);
+
+                    // Parse dữ liệu XML thành danh sách khách hàng
+                    List<Customer> newCustomers = XmlParser.parseCustomersFromXml(inputStream);
+
+                    // Lấy danh sách số điện thoại hiện tại từ cơ sở dữ liệu
+                    List<String> existingPhoneNumbers = dbManager.getAllCustomerPhoneNumbers();
+
+                    // Thêm khách hàng mới vào cơ sở dữ liệu nếu không tồn tại
+                    for (Customer newCustomer : newCustomers) {
+                        if (!existingPhoneNumbers.contains(newCustomer.getPhoneNumber())) {
+                            long result = dbManager.insertCustomer(newCustomer);
+
+                            // Kiểm tra kết quả chèn
+                            if (result == -1) {
+                                Log.e("InsertError", "Failed to insert customer: " + newCustomer.getPhoneNumber());
+                            }
+                        }
+                    }
+
+                    // Thông báo thành công
+                    Toast.makeText(this, "Customers imported successfully.", Toast.LENGTH_SHORT).show();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "Failed to import customers: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "No file selected.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+
 
 }

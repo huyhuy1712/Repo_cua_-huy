@@ -13,24 +13,34 @@ import androidx.core.content.FileProvider;
 import com.example.bt2.model.Customer;
 import com.example.bt2.provider.DatabaseManager;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 public class XmlParser {
 
     private DatabaseManager dbManager;  // Quản lý cơ sở dữ liệu SQLite
 
 
-    // Parse customers from XML resource
-    public static List<Customer> parseCustomersFromXml(Context context, int resId) throws Exception {
-        InputStream inputStream = context.getResources().openRawResource(resId);
+    // Parse customers from XML file
+    public static List<Customer> parseCustomersFromXml(InputStream inputStream) throws Exception {
         XmlPullParser parser = Xml.newPullParser();
         parser.setInput(inputStream, null);
 
@@ -66,70 +76,80 @@ public class XmlParser {
             }
             eventType = parser.next();
         }
-        inputStream.close();
+        inputStream.close(); // Đóng stream sau khi sử dụng
         return customers;
     }
+
 
     // Export customers to XML
     public static void exportCustomersToXML(Context context) {
         DatabaseManager dbManager = new DatabaseManager(context);
         List<Customer> customers = dbManager.getAllCustomers();
 
-        // Create XML Serializer
-        XmlSerializer xmlSerializer = Xml.newSerializer();
-        StringWriter writer = new StringWriter();
-
         try {
-            // Start XML document
-            xmlSerializer.setOutput(writer);
-            xmlSerializer.startDocument("UTF-8", true);
+            // Tạo tài liệu XML
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+            Document doc = docBuilder.newDocument();
 
-            // Root element
-            xmlSerializer.startTag("", "customers");
+            // Thẻ gốc (Root)
+            Element rootElement = doc.createElement("customers");
+            doc.appendChild(rootElement);
 
-            // Iterate over customers and add them to the XML document
+            // Thêm từng khách hàng
             for (Customer customer : customers) {
-                xmlSerializer.startTag("", "customer");
+                Element customerElement = doc.createElement("customer");
 
-                xmlSerializer.startTag("", "phoneNumber");
-                xmlSerializer.text(customer.getPhoneNumber());
-                xmlSerializer.endTag("", "phoneNumber");
+                // Thẻ phoneNumber
+                Element phoneNumber = doc.createElement("phoneNumber");
+                phoneNumber.appendChild(doc.createTextNode(customer.getPhoneNumber()));
+                customerElement.appendChild(phoneNumber);
 
-                xmlSerializer.startTag("", "createdDate");
-                xmlSerializer.text(customer.getCreatedDate());
-                xmlSerializer.endTag("", "createdDate");
+                // Thẻ createdDate
+                Element createdDate = doc.createElement("createdDate");
+                createdDate.appendChild(doc.createTextNode(customer.getCreatedDate()));
+                customerElement.appendChild(createdDate);
 
-                xmlSerializer.startTag("", "updatedDate");
-                xmlSerializer.text(customer.getUpdatedDate());
-                xmlSerializer.endTag("", "updatedDate");
+                // Thẻ updatedPointsDate
+                Element updatedPointsDate = doc.createElement("updatedPointsDate");
+                updatedPointsDate.appendChild(doc.createTextNode(customer.getUpdatedDate()));
+                customerElement.appendChild(updatedPointsDate);
 
-                xmlSerializer.startTag("", "note");
-                xmlSerializer.text(customer.getNote());
-                xmlSerializer.endTag("", "note");
+                // Thẻ points
+                Element points = doc.createElement("points");
+                points.appendChild(doc.createTextNode(String.valueOf(customer.getPoint())));
+                customerElement.appendChild(points);
 
-                xmlSerializer.startTag("", "point");
-                xmlSerializer.text(String.valueOf(customer.getPoint()));
-                xmlSerializer.endTag("", "point");
+                // Thẻ note
+                Element note = doc.createElement("note");
+                note.appendChild(doc.createTextNode(customer.getNote()));
+                customerElement.appendChild(note);
 
-                xmlSerializer.endTag("", "customer");
+                // Thêm customer vào root
+                rootElement.appendChild(customerElement);
             }
 
-            // End the XML document
-            xmlSerializer.endTag("", "customers");
-            xmlSerializer.endDocument();
+            // Chuyển XML sang định dạng đẹp
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+            DOMSource source = new DOMSource(doc);
 
-            // Save the XML file in internal storage
+            // Lưu vào file
             FileOutputStream fos = context.openFileOutput("customers.xml", Context.MODE_PRIVATE);
-            fos.write(writer.toString().getBytes());
-            fos.close();
+            StreamResult result = new StreamResult(fos);
+            transformer.transform(source, result);
 
-            Toast.makeText(context, "Customers exported to XML successfully", Toast.LENGTH_SHORT).show();
+            fos.close();
+            Toast.makeText(context, "Xuất file XML thành công!", Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(context, "Error exporting customers to XML", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Lỗi khi xuất file XML!", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     // Send the XML file via email
     public static void sendEmailWithXMLFile(Context context) {
