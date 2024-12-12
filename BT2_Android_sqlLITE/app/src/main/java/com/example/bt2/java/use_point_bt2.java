@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.bt2.R;
 import com.example.bt2.model.Customer;
-import com.example.bt2.model.CustomerManager;
 import com.example.bt2.provider.DatabaseManager;
 
 import java.util.List;

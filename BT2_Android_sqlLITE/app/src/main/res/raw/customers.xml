@@ -43,26 +43,12 @@
         <note>Super vip customer</note>
     </customer>
     <customer>
-        <phoneNumber>4580785275</phoneNumber>
+        <phoneNumber>1111111111</phoneNumber>
         <createdDate>2024-11-08</createdDate>
         <updatedPointsDate>2024-11-08</updatedPointsDate>
         <points>50</points>
         <note>Super vip customer</note>
     </customer>
-    <customer>
-        <phoneNumber>5580785275</phoneNumber>
-        <createdDate>2024-11-08</createdDate>
-        <updatedPointsDate>2024-11-08</updatedPointsDate>
-        <points>50</points>
-        <note>sdhdsfhfdhf</note>
-    </customer>
-<!--    <customer>-->
-<!--        <phoneNumber>6580785275</phoneNumber>-->
-<!--        <createdDate>2024-11-08</createdDate>-->
-<!--        <updatedPointsDate>2024-11-08</updatedPointsDate>-->
-<!--        <points>50</points>-->
-<!--        <note>Super vip customer</note>-->
-<!--    </customer>-->
 <!--    <customer>-->
 <!--        <phoneNumber>7580785275</phoneNumber>-->
 <!--        <createdDate>2024-11-08</createdDate>-->
