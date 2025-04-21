@@ -7,6 +7,8 @@ from kivymd.app import MDApp
 from kivy.uix.screenmanager import ScreenManager
 
 
+
+
 class Footer(BoxLayout):
     def __init__(self, screen_manager, **kwargs):
         super().__init__(size_hint=(1, 0.12), padding=[10, 10, 10, 5], spacing=10, **kwargs)  # Tăng padding bottom
@@ -27,7 +29,7 @@ class Footer(BoxLayout):
         home_layout.add_widget(home_button)
 
         # Câu khẩu hiệu
-        slogan_label = Label(text="Không uống rượu bia khi lái xe", bold=True,
+        slogan_label = Label(text="Không uống xe khi lái rượu bia", bold=True,
                              color=(0.2, 0.2, 0.2, 1), font_size=22, valign='center')
 
         # Layout chứa nút Logout
@@ -50,12 +52,27 @@ class Footer(BoxLayout):
 
     def go_home(self, instance):
         if self.screen_manager and 'main' in self.screen_manager.screen_names:
-            print("Chuyển về màn hình main")
             self.screen_manager.current = 'main'
-        else:
-            print(" Lỗi: Không tìm thấy màn hình 'main'")
+
 
     def logout(self, instance):
+        if self.screen_manager:
+            if 'main' in self.screen_manager.screen_names:
+                self.screen_manager.remove_widget(self.screen_manager.get_screen("main"))
+            if 'scan' in self.screen_manager.screen_names:
+                self.screen_manager.remove_widget(self.screen_manager.get_screen("scan"))
+            if 'upload' in self.screen_manager.screen_names:
+                self.screen_manager.remove_widget(self.screen_manager.get_screen("upload"))
+            if 'history' in self.screen_manager.screen_names:
+                self.screen_manager.remove_widget(self.screen_manager.get_screen("history"))
+            if 'info' in self.screen_manager.screen_names:
+                self.screen_manager.remove_widget(self.screen_manager.get_screen("info"))
+            if 'user' in self.screen_manager.screen_names:
+                self.screen_manager.remove_widget(self.screen_manager.get_screen("user"))
+            
+            
+            
+            self.screen_manager.current = 'modau'
         print("Đăng xuất khỏi ứng dụng")
       
 
@@ -67,3 +84,6 @@ class MyApp(MDApp):
 
 if __name__ == "__main__":
     MyApp().run()
+
+
+
